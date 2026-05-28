@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import CreatorBio from '@/components/common/CreatorBio';
 import { lineClampClassFor } from '@/utils/lineClamp.utils';
 
@@ -124,5 +124,72 @@ describe('CreatorBio clamp + onboarding integration', () => {
 		render(<CreatorBio bio="Hello world" isOnboardingPending />);
 		expect(screen.getByText('Hello world')).toBeInTheDocument();
 		expect(screen.queryByText(/setting up their profile/i)).toBeNull();
+	});
+});
+
+// ---------------------------------------------------------------------------
+// #315 — auto-collapse + expand toggle on the profile variant
+// ---------------------------------------------------------------------------
+
+describe('CreatorBio collapsible (#315)', () => {
+	const LONG = 'X'.repeat(250); // > default 200-char threshold
+
+	it('does not render a toggle for a short bio even when collapsible is true', () => {
+		render(<CreatorBio bio="Short bio." variant="profile" collapsible />);
+		expect(screen.queryByRole('button')).toBeNull();
+		// And the paragraph is plain — no line-clamp class.
+		expect(screen.getByText('Short bio.').className).not.toMatch(/line-clamp/);
+	});
+
+	it('does not engage collapse on the card variant — that variant clamps already', () => {
+		render(<CreatorBio bio={LONG} variant="card" collapsible />);
+		expect(screen.queryByRole('button')).toBeNull();
+	});
+
+	it('clamps a long profile bio and renders a Show more button', () => {
+		render(<CreatorBio bio={LONG} variant="profile" collapsible />);
+		const button = screen.getByRole('button', { name: 'Show more' });
+		expect(button).toHaveAttribute('aria-expanded', 'false');
+		const paragraph = screen.getByText(LONG);
+		// Collapsed → some line-clamp utility is applied.
+		expect(paragraph.className).toMatch(/line-clamp/);
+		// aria-controls points at the bio paragraph.
+		const controls = button.getAttribute('aria-controls');
+		expect(controls).toBeTruthy();
+		expect(paragraph.id).toBe(controls);
+	});
+
+	it('toggles to Show less and removes the clamp when expanded', () => {
+		render(<CreatorBio bio={LONG} variant="profile" collapsible />);
+		const button = screen.getByRole('button', { name: 'Show more' });
+		fireEvent.click(button);
+		expect(
+			screen.getByRole('button', { name: 'Show less' })
+		).toHaveAttribute('aria-expanded', 'true');
+		expect(screen.getByText(LONG).className).not.toMatch(/line-clamp/);
+	});
+
+	it('respects an explicit collapseThresholdChars override', () => {
+		render(
+			<CreatorBio
+				bio="Medium length bio with about forty chars."
+				variant="profile"
+				collapsible
+				collapseThresholdChars={10}
+			/>
+		);
+		expect(screen.getByRole('button', { name: 'Show more' })).toBeInTheDocument();
+	});
+
+	it('clamps to collapsedMaxLines when supplied', () => {
+		render(
+			<CreatorBio
+				bio={LONG}
+				variant="profile"
+				collapsible
+				collapsedMaxLines={2}
+			/>
+		);
+		expect(screen.getByText(LONG).className).toMatch(/\bline-clamp-2\b/);
 	});
 });

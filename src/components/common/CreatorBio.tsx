@@ -1,3 +1,4 @@
+import { useId, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { lineClampClassFor } from '@/utils/lineClamp.utils';
 
@@ -27,12 +28,41 @@ interface CreatorBioProps {
 	 * uniform across varying bio lengths. Short bios are unaffected.
 	 */
 	maxLines?: number | null;
+	/**
+	 * Enable auto-collapse with an expand toggle (#315). Only meaningful
+	 * for the `profile` variant — on the card the clamp already keeps
+	 * layouts compact. When true and the bio exceeds `collapsedMaxLines`,
+	 * the bio renders in a collapsed state and a focusable "Show more" /
+	 * "Show less" button toggles to the full bio.
+	 *
+	 * The auto-collapse threshold is heuristic: a character count proxy
+	 * for the line count, since we don't have access to the rendered DOM
+	 * height during render. Bios below the threshold render without the
+	 * toggle (acceptance criterion: short bios are unaffected).
+	 */
+	collapsible?: boolean;
+	/**
+	 * Line count to clamp to in the collapsed state (default `4`).
+	 * Ignored when `collapsible` is false.
+	 */
+	collapsedMaxLines?: number;
+	/**
+	 * Character count above which a `profile`-variant bio is treated as
+	 * "long enough to warrant a toggle" (default `200`). Below this we
+	 * render the full bio with no toggle — the auto-collapse is only
+	 * useful for bios that would actually push other content off-screen.
+	 */
+	collapseThresholdChars?: number;
 	className?: string;
 }
 
 const DEFAULT_FALLBACK = "This creator hasn't shared a bio yet.";
 /** Default maximum bio lines on the card. */
 const DEFAULT_CARD_MAX_LINES = 3;
+/** Default maximum lines in the collapsed profile state. */
+const DEFAULT_COLLAPSED_LINES = 4;
+/** Default char count above which the collapsible toggle is rendered. */
+const DEFAULT_COLLAPSE_THRESHOLD_CHARS = 200;
 
 const variantClasses: Record<'card' | 'profile', { value: string; fallback: string }> = {
 	card: {
@@ -58,10 +88,15 @@ const CreatorBio: React.FC<CreatorBioProps> = ({
 	allowEmpty = false,
 	isOnboardingPending = false,
 	maxLines,
+	collapsible = false,
+	collapsedMaxLines = DEFAULT_COLLAPSED_LINES,
+	collapseThresholdChars = DEFAULT_COLLAPSE_THRESHOLD_CHARS,
 	className,
 }) => {
 	const trimmed = bio?.trim();
 	const styles = variantClasses[variant];
+	const bioId = useId();
+	const [expanded, setExpanded] = useState(false);
 
 	if (!trimmed) {
 		if (allowEmpty) {
@@ -85,17 +120,32 @@ const CreatorBio: React.FC<CreatorBioProps> = ({
 		);
 	}
 
+	// `collapsible` only applies to the `profile` variant; the card already
+	// has its own clamp via `maxLines`. Long enough = above the char
+	// threshold (acceptance: short bios are unaffected).
+	const shouldOfferCollapse =
+		collapsible &&
+		variant === 'profile' &&
+		trimmed.length > collapseThresholdChars;
+
 	// Card defaults to a 3-line clamp; explicit null disables it. Profile
-	// variant ignores the prop so the full bio stays visible on the detail
-	// page.
-	const effectiveMaxLines =
-		variant === 'card' && maxLines === undefined
+	// variant ignores `maxLines` unless `collapsible` is engaged, in which
+	// case we clamp to `collapsedMaxLines` while collapsed.
+	const effectiveMaxLines = shouldOfferCollapse
+		? expanded
+			? null
+			: collapsedMaxLines
+		: variant === 'card' && maxLines === undefined
 			? DEFAULT_CARD_MAX_LINES
 			: maxLines;
-	const clampClass = lineClampClassFor(variant, effectiveMaxLines);
+	const clampVariant: 'card' | 'profile' = shouldOfferCollapse
+		? 'card'
+		: variant;
+	const clampClass = lineClampClassFor(clampVariant, effectiveMaxLines);
 
-	return (
+	const bioParagraph = (
 		<p
+			id={shouldOfferCollapse ? bioId : undefined}
 			// Preserve the full bio in the accessible name so screen readers
 			// can read the unclamped text — the visual truncation is cosmetic.
 			title={clampClass ? trimmed : undefined}
@@ -103,6 +153,25 @@ const CreatorBio: React.FC<CreatorBioProps> = ({
 		>
 			{trimmed}
 		</p>
+	);
+
+	if (!shouldOfferCollapse) {
+		return bioParagraph;
+	}
+
+	return (
+		<div className="space-y-1">
+			{bioParagraph}
+			<button
+				type="button"
+				aria-expanded={expanded}
+				aria-controls={bioId}
+				onClick={() => setExpanded(prev => !prev)}
+				className="font-jakarta text-xs font-semibold text-amber-300/85 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/55 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-950 rounded-sm"
+			>
+				{expanded ? 'Show less' : 'Show more'}
+			</button>
+		</div>
 	);
 };
 

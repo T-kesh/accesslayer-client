@@ -104,7 +104,14 @@ const CreatorProfileHeader: React.FC<CreatorProfileHeaderProps> = ({
 					>
 						{displayHandle || `@${handle}`}
 					</p>
-					<CreatorBio bio={bio} variant="profile" className="mt-2 max-w-md" />
+					{/* #315: profile bio auto-collapses with a Show more / less
+						toggle once long enough. Short bios render unchanged. */}
+					<CreatorBio
+						bio={bio}
+						variant="profile"
+						collapsible
+						className="mt-2 max-w-md"
+					/>
 				</div>
 			</div>
 
