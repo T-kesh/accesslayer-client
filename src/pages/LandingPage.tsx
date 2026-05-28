@@ -42,6 +42,8 @@ import {
 	creatorCardEntryStyle,
 } from '@/utils/cardEntryAnimation.utils';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import ClearedFiltersEmptyState from '@/components/common/ClearedFiltersEmptyState';
+import CreatorListPagination from '@/components/common/CreatorListPagination';
 
 const FEATURED_CREATOR_FACTS = [
 	{ label: 'Membership', value: 'Collectors Circle' },
@@ -641,35 +643,12 @@ function LandingPage() {
 										</div>
 									))}
 								</div>
-								<div className="mt-8 flex items-center justify-center gap-3">
-									<Button
-										type="button"
-										variant="outline"
-										size="sm"
-										disabled={safePage === 0}
-										onClick={() =>
-											handlePageChange(Math.max(0, safePage - 1))
-										}
-									>
-										Previous
-									</Button>
-									<span className="marketplace-label-muted text-xs">
-										Page {safePage + 1} of {totalPages}
-									</span>
-									<Button
-										type="button"
-										variant="outline"
-										size="sm"
-										disabled={safePage >= totalPages - 1}
-										onClick={() =>
-											handlePageChange(
-												Math.min(totalPages - 1, safePage + 1)
-											)
-										}
-									>
-										Next
-									</Button>
-								</div>
+								<CreatorListPagination
+									page={safePage}
+									totalPages={totalPages}
+									onPageChange={handlePageChange}
+									className="mt-8"
+								/>
 								{safePage >= totalPages - 1 && (
 									<p
 										role="status"
@@ -682,18 +661,27 @@ function LandingPage() {
 							</div>
 						) : (
 							<div className="flex flex-col items-center gap-6 py-12">
-								<EmptyState
-									image="/images/no-results.png"
-									title="No creators found"
-									description={`We couldn't find any creators matching "${searchQuery}". Try a different name or handle.`}
-									onReset={handleResetSearch}
-								/>
-								{!hasInvalidSearchInput && (
-									<EmptySearchSuggestions
+								{trimmedSearchQuery.length === 0 ? (
+									<ClearedFiltersEmptyState
+										onBrowseAll={handleResetSearch}
 										className="w-full max-w-xl"
-										suggestions={searchSuggestions}
-										onSelect={setSearchQuery}
 									/>
+								) : (
+									<>
+										<EmptyState
+											image="/images/no-results.png"
+											title="No creators found"
+											description={`We couldn't find any creators matching "${searchQuery}". Try a different name or handle.`}
+											onReset={handleResetSearch}
+										/>
+										{!hasInvalidSearchInput && (
+											<EmptySearchSuggestions
+												className="w-full max-w-xl"
+												suggestions={searchSuggestions}
+												onSelect={setSearchQuery}
+											/>
+										)}
+									</>
 								)}
 							</div>
 						)}

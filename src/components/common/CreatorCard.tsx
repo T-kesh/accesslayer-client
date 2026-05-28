@@ -2,7 +2,16 @@ import { useRef, useState } from 'react';
 import { useAccount } from 'wagmi';
 import type { Course } from '@/services/course.service';
 import { cn } from '@/lib/utils';
-import { ShoppingCart, Link as LinkIcon, TrendingUp } from 'lucide-react';
+import { ShoppingCart, Link as LinkIcon, TrendingUp, MoreVertical, Copy, Share2, ExternalLink } from 'lucide-react';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import RecentActivityBadge from '@/components/common/RecentActivityBadge';
 import toast from 'react-hot-toast';
 import showToast from '@/utils/toast.util';
 import { formatCompactNumber, formatNumber } from '@/utils/numberFormat.utils';
@@ -105,6 +114,28 @@ const CreatorCard: React.FC<CreatorCardProps> = ({
 		}, 1500);
 	};
 
+	const isRecentlyActive = (creator.volume24h ?? 0) > 0;
+
+	const handleCopyLink = () => {
+		const url = `${window.location.origin}/creator/${creator.id}`;
+		navigator.clipboard
+			.writeText(url)
+			.then(() => toast.success('Profile link copied'))
+			.catch(() => toast.error('Could not copy link'));
+	};
+
+	const handleShare = () => {
+		const url = `${window.location.origin}/creator/${creator.id}`;
+		if (navigator.share) {
+			navigator.share({ title: creator.title, url }).catch(() => {});
+		} else {
+			navigator.clipboard
+				.writeText(url)
+				.then(() => toast.success('Link copied to clipboard'))
+				.catch(() => toast.error('Could not share'));
+		}
+	};
+
 	const handleBuy = () => {
 		if (!isConnected) {
 			toast.error('Please connect your wallet to purchase keys', {
@@ -134,6 +165,46 @@ const CreatorCard: React.FC<CreatorCardProps> = ({
 				className
 			)}
 		>
+			<div className="absolute right-3 top-3 z-20">
+				<DropdownMenu>
+					<DropdownMenuTrigger
+						aria-label={`More actions for ${creator.title}`}
+						className="flex size-8 items-center justify-center rounded-full text-white/40 transition-colors hover:bg-white/10 hover:text-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60"
+					>
+						<MoreVertical className="size-4" aria-hidden="true" />
+					</DropdownMenuTrigger>
+					<DropdownMenuContent
+						align="end"
+						className="w-48 border-white/10 bg-slate-900/95 backdrop-blur-xl"
+					>
+						<DropdownMenuLabel className="text-xs text-white/50">
+							{creator.title}
+						</DropdownMenuLabel>
+						<DropdownMenuSeparator className="bg-white/10" />
+						<DropdownMenuItem
+							onSelect={handleCopyLink}
+							className="cursor-pointer gap-2 text-white/70 focus:bg-white/10 focus:text-white"
+						>
+							<Copy className="size-3.5" aria-hidden="true" />
+							Copy profile link
+						</DropdownMenuItem>
+						<DropdownMenuItem
+							onSelect={handleShare}
+							className="cursor-pointer gap-2 text-white/70 focus:bg-white/10 focus:text-white"
+						>
+							<Share2 className="size-3.5" aria-hidden="true" />
+							Share creator
+						</DropdownMenuItem>
+						<DropdownMenuItem
+							onSelect={() => {}}
+							className="cursor-pointer gap-2 text-white/70 focus:bg-white/10 focus:text-white"
+						>
+							<ExternalLink className="size-3.5" aria-hidden="true" />
+							View profile
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
+			</div>
 			<div
 				className="relative mb-4 aspect-square overflow-hidden rounded-xl"
 				role="img"
@@ -176,6 +247,7 @@ const CreatorCard: React.FC<CreatorCardProps> = ({
 					/>
 					<Change24hBadge change={creator.change24h} />
 					<KeySupplyBadge supply={creator.creatorShareSupply} />
+					{isRecentlyActive && <RecentActivityBadge />}
 				</div>
 				<p className="marketplace-label-muted font-jakarta text-sm">
 					{displayInstructorHandle}
