@@ -170,4 +170,27 @@ describe('ProfileTabPillGroup – hash routing enabled', () => {
 			);
 		}
 	});
+
+	it('uses the project focus-visible ring for keyboard tab focus', () => {
+		const onTabChange = vi.fn();
+		render(
+			<ProfileTabPillGroup
+				tabs={TABS}
+				activeTab="overview"
+				onTabChange={onTabChange}
+				enableHashRouting
+			/>
+		);
+
+		const tab = screen.getByRole('tab', { name: 'Overview' });
+
+		expect(tab).toHaveClass(
+			'focus-visible:border-ring',
+			'focus-visible:ring-[3px]',
+			'focus-visible:ring-ring/50',
+			'focus-visible:ring-offset-2',
+			'focus-visible:ring-offset-background'
+		);
+		expect(tab.className).not.toContain('focus:ring-');
+	});
 });

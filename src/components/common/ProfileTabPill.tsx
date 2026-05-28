@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const profileTabPillVariants = cva(
-	'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold font-jakarta tracking-wide transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent',
+	'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold font-jakarta tracking-wide transition-all duration-200 outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
 	{
 		variants: {
 			state: {
