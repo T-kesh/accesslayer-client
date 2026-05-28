@@ -3,7 +3,10 @@ import { courseService, type Course } from '@/services/course.service';
 import SearchBar from '@/components/common/SearchBar';
 import StickyFilterBar from '@/components/common/StickyFilterBar';
 import CreatorCard from '@/components/common/CreatorCard';
-import { CreatorGridSkeleton } from '@/components/common/CreatorSkeleton';
+import {
+	CreatorGridSkeleton,
+	CreatorProfileHeaderSkeleton,
+} from '@/components/common/CreatorSkeleton';
 import EmptyState from '@/components/common/EmptyState';
 import EmptySearchSuggestions from '@/components/common/EmptySearchSuggestions';
 import SectionDivider from '@/components/common/SectionDivider';
@@ -662,13 +665,17 @@ function LandingPage() {
 						sectionName="Creator Header"
 						minHeight={150}
 					>
-						<CreatorProfileHeader
-							name="Alex Rivers"
-							handle="arivers"
-							creatorId="arivers"
-							isVerified={true}
-							avatarUrl="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop"
-						/>
+						{isLoading ? (
+							<CreatorProfileHeaderSkeleton />
+						) : (
+							<CreatorProfileHeader
+								name="Alex Rivers"
+								handle="arivers"
+								creatorId="arivers"
+								isVerified={true}
+								avatarUrl="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop"
+							/>
+						)}
 					</SectionErrorBoundary>
 				</div>
 
@@ -716,14 +723,17 @@ function LandingPage() {
 										<MiniStatChip
 											label="Status"
 											value="Verified creator"
+											explanation="Creator has completed identity verification with Access Layer."
 										/>
 										<MiniStatChip
 											label="Audience"
 											value="12.4K collectors"
+											explanation="Number of wallets that currently hold at least one of this creator's keys."
 										/>
 										<MiniStatChip
 											label="Access"
 											value="Member-first drops"
+											explanation="Key holders see new drops a window before the public marketplace."
 										/>
 									</div>
 								</div>
