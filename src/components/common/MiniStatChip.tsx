@@ -1,14 +1,23 @@
 import { cn } from '@/lib/utils';
+import AccessibleInfoTrigger from '@/components/common/AccessibleInfoTrigger';
 
 interface MiniStatChipProps {
 	label: string;
 	value: string;
+	/**
+	 * Optional explanation surfaced via an accessible tooltip trigger (#290).
+	 * The trigger is a focusable button with `aria-describedby` pointing at
+	 * the tooltip, so keyboard users can reach it and screen readers
+	 * announce the explanation on focus.
+	 */
+	explanation?: string;
 	className?: string;
 }
 
 const MiniStatChip: React.FC<MiniStatChipProps> = ({
 	label,
 	value,
+	explanation,
 	className,
 }) => {
 	return (
@@ -24,6 +33,12 @@ const MiniStatChip: React.FC<MiniStatChipProps> = ({
 			<span className="truncate font-jakarta text-xs font-semibold text-white">
 				{value}
 			</span>
+			{explanation && (
+				<AccessibleInfoTrigger
+					explanation={explanation}
+					label={`Explanation for ${label}`}
+				/>
+			)}
 		</div>
 	);
 };
