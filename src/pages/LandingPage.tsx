@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { courseService, type Course } from '@/services/course.service';
+import { cn } from '@/lib/utils';
 import SearchBar from '@/components/common/SearchBar';
 import StickyFilterBar from '@/components/common/StickyFilterBar';
 import CreatorCard from '@/components/common/CreatorCard';
@@ -24,8 +25,8 @@ import CreatorProfileHeader from '@/components/common/CreatorProfileHeader';
 import TransactionRetryNotice from '@/components/common/TransactionRetryNotice';
 import EmptyTransactionTimelineState from '@/components/common/EmptyTransactionTimelineState';
 import TradeDialog, { type TradeSide } from '@/components/common/TradeDialog';
-import PendingTxModal from '@/components/common/PendingTxModal';
 import NetworkMismatchBanner from '@/components/common/NetworkMismatchBanner';
+import StellarConnectionQualityBadge from '@/components/common/StellarConnectionQualityBadge';
 import { useNetworkMismatch } from '@/hooks/useNetworkMismatch';
 import showToast from '@/utils/toast.util';
 import { formatCompactNumber, formatNumber } from '@/utils/numberFormat.utils';
@@ -210,7 +211,6 @@ function LandingPage() {
 	const [tradeSide, setTradeSide] = useState<TradeSide>('buy');
 	const [tradeDialogOpen, setTradeDialogOpen] = useState(false);
 	const [tradeSubmitting, setTradeSubmitting] = useState(false);
-	const [pendingTxOpen, setPendingTxOpen] = useState(false);
 	const [sortOption, setSortOption] = useState<SortOption>(() => {
 		if (typeof window === 'undefined') return 'featured';
 		const saved = window.localStorage.getItem(
@@ -451,7 +451,6 @@ function LandingPage() {
 	const handleConfirmTrade = async (amount: number) => {
 		const previousHoldings = featuredHoldings;
 		setTradeSubmitting(true);
-		setPendingTxOpen(true);
 
 		try {
 			showToast.loading(
@@ -482,7 +481,6 @@ function LandingPage() {
 			showToast.error('Trade failed. Holdings have been restored.');
 		} finally {
 			setTradeSubmitting(false);
-			setPendingTxOpen(false);
 		}
 	};
 
@@ -519,6 +517,9 @@ function LandingPage() {
 						>
 							<Button>Buy Access</Button>
 						</UnavailableAction>
+					</div>
+					<div className="mt-4 flex justify-center">
+						<StellarConnectionQualityBadge />
 					</div>
 				</MarketplaceSection>
 
@@ -826,22 +827,38 @@ function LandingPage() {
 									}
 								/>
 								{isNetworkMismatch && <NetworkMismatchBanner />}
-								<div className="hidden md:flex items-center gap-3">
-									<Button
-										className="rounded-xl"
-										onClick={() => openTradeDialog('buy')}
-										disabled={isNetworkMismatch}
+								<div className="relative">
+									<div
+										className={cn(
+											'hidden md:flex items-center gap-3 transition-opacity duration-200',
+											tradeSubmitting && 'pointer-events-none select-none opacity-60'
+										)}
+										aria-busy={tradeSubmitting || undefined}
 									>
-										Buy
-									</Button>
-									<Button
-										className="rounded-xl"
-										variant="outline"
-										onClick={() => openTradeDialog('sell')}
-										disabled={isNetworkMismatch}
-									>
-										Sell
-									</Button>
+										<Button
+											className="rounded-xl"
+											onClick={() => openTradeDialog('buy')}
+											disabled={isNetworkMismatch || tradeSubmitting}
+										>
+											Buy
+										</Button>
+										<Button
+											className="rounded-xl"
+											variant="outline"
+											onClick={() => openTradeDialog('sell')}
+											disabled={isNetworkMismatch || tradeSubmitting}
+										>
+											Sell
+										</Button>
+									</div>
+									{tradeSubmitting && (
+										<div className="absolute inset-0 hidden items-center justify-center rounded-[1.25rem] border border-white/10 bg-slate-950/65 backdrop-blur-sm md:flex">
+											<div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/80 px-3 py-1.5 text-xs font-bold text-white/85 shadow-lg">
+												<div className="size-3.5 animate-spin rounded-full border-2 border-amber-400/25 border-t-amber-400" />
+												Submitting trade
+											</div>
+										</div>
+									)}
 								</div>
 							</div>
 						</MarketplaceSection>
@@ -862,23 +879,41 @@ function LandingPage() {
 							</div>
 						</div>
 						<div className="flex items-center gap-2">
-							<Button
-								className="rounded-xl"
-								size="sm"
-								onClick={() => openTradeDialog('buy')}
-								disabled={isNetworkMismatch}
-							>
-								Buy
-							</Button>
-							<Button
-								className="rounded-xl"
-								size="sm"
-								variant="outline"
-								onClick={() => openTradeDialog('sell')}
-								disabled={isNetworkMismatch}
-							>
-								Sell
-							</Button>
+							<div className="relative">
+								<div
+									className={cn(
+										'flex items-center gap-2 transition-opacity duration-200',
+										tradeSubmitting && 'pointer-events-none select-none opacity-60'
+									)}
+									aria-busy={tradeSubmitting || undefined}
+								>
+									<Button
+										className="rounded-xl"
+										size="sm"
+										onClick={() => openTradeDialog('buy')}
+										disabled={isNetworkMismatch || tradeSubmitting}
+									>
+										Buy
+									</Button>
+									<Button
+										className="rounded-xl"
+										size="sm"
+										variant="outline"
+										onClick={() => openTradeDialog('sell')}
+										disabled={isNetworkMismatch || tradeSubmitting}
+									>
+										Sell
+									</Button>
+								</div>
+								{tradeSubmitting && (
+									<div className="absolute inset-0 flex items-center justify-center rounded-xl border border-white/10 bg-slate-950/65 px-3 backdrop-blur-sm">
+										<div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/80 px-3 py-1.5 text-[11px] font-bold text-white/85 shadow-lg">
+											<div className="size-3 animate-spin rounded-full border-2 border-amber-400/25 border-t-amber-400" />
+											Submitting trade
+										</div>
+									</div>
+								)}
+							</div>
 						</div>
 					</div>
 				</div>
@@ -902,14 +937,6 @@ function LandingPage() {
 				isSubmitting={tradeSubmitting}
 				onOpenChange={setTradeDialogOpen}
 				onConfirm={handleConfirmTrade}
-			/>
-			<PendingTxModal
-				open={pendingTxOpen}
-				onOpenChange={setPendingTxOpen}
-				isLoading={true}
-				blockDismissal={true}
-				title="Confirming trade"
-				description="Waiting for Stellar confirmation, then refreshing holdings."
 			/>
 			<ScrollToTop />
 		</div>

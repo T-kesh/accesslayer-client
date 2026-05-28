@@ -8,6 +8,7 @@ import VerifiedBadge from '@/components/common/VerifiedBadge';
 import CreatorInitialsAvatar from '@/components/common/CreatorInitialsAvatar';
 import CreatorBio from '@/components/common/CreatorBio';
 import { formatCreatorHandle } from '@/utils/handleDisplay.utils';
+import { CREATOR_CARD_MEDIA_RADIUS_CLASS } from '@/utils/creatorCardTokens';
 
 interface CreatorProfileHeaderProps {
 	name: string;
@@ -80,7 +81,10 @@ const CreatorProfileHeader: React.FC<CreatorProfileHeaderProps> = ({
 		>
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
 				<div
-					className="size-24 overflow-hidden rounded-2xl border-4 border-white/10 shadow-xl md:size-32"
+					className={cn(
+						'size-24 overflow-hidden border-4 border-white/10 shadow-xl md:size-32',
+						CREATOR_CARD_MEDIA_RADIUS_CLASS
+					)}
 					role="img"
 					aria-labelledby="creator-profile-name"
 				>

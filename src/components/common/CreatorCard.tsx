@@ -27,6 +27,7 @@ import CreatorListRowDivider from '@/components/common/CreatorListRowDivider';
 import BuyActionHelperText from '@/components/common/BuyActionHelperText';
 import NetworkFeeHint from '@/components/common/NetworkFeeHint';
 import CreatorBio from '@/components/common/CreatorBio';
+import { CREATOR_CARD_MEDIA_RADIUS_CLASS } from '@/utils/creatorCardTokens';
 
 interface CreatorCardProps {
 	creator: Course;
@@ -135,7 +136,10 @@ const CreatorCard: React.FC<CreatorCardProps> = ({
 			)}
 		>
 			<div
-				className="relative mb-4 aspect-square overflow-hidden rounded-xl"
+				className={cn(
+					'relative mb-4 aspect-square overflow-hidden',
+					CREATOR_CARD_MEDIA_RADIUS_CLASS
+				)}
 				role="img"
 				aria-labelledby={`creator-name-${creator.id}`}
 			>

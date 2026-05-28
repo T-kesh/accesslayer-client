@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils';
 import CreatorProfileStatItem from './CreatorProfileStatItem';
 import Skeleton from '@/components/ui/skeleton';
 import type { ReactNode } from 'react';
+import { CREATOR_CARD_STAT_GRID_GAP_CLASS } from '@/utils/creatorCardTokens';
 
 interface CreatorProfileStatItemData {
   label: string;
@@ -24,7 +25,8 @@ const CreatorProfileStatRowSkeleton: React.FC<{
   return (
     <div
       className={cn(
-        'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4',
+        'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
+        CREATOR_CARD_STAT_GRID_GAP_CLASS,
         className
       )}
     >
@@ -66,7 +68,8 @@ const CreatorProfileStatRow: React.FC<CreatorProfileStatRowProps> = ({
   return (
     <div
       className={cn(
-        'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4',
+        'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
+        CREATOR_CARD_STAT_GRID_GAP_CLASS,
         className
       )}
     >

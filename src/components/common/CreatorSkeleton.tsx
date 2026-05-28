@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { CREATOR_CARD_MEDIA_RADIUS_CLASS } from '@/utils/creatorCardTokens';
 
 interface CreatorSkeletonProps {
 	className?: string;
@@ -25,7 +26,8 @@ const CreatorSkeleton: React.FC<CreatorSkeletonProps> = ({
 		>
 			<div
 				className={cn(
-					'mb-4 aspect-square w-full rounded-xl',
+					'mb-4 aspect-square w-full',
+					CREATOR_CARD_MEDIA_RADIUS_CLASS,
 					blockClass
 				)}
 			/>

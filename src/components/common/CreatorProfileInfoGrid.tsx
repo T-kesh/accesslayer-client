@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import CreatorProfileStatItem from './CreatorProfileStatItem';
+import { CREATOR_CARD_STAT_GRID_GAP_CLASS } from '@/utils/creatorCardTokens';
 
 interface CreatorProfileInfoItem {
 	label: string;
@@ -20,7 +21,8 @@ const CreatorProfileInfoGrid: React.FC<CreatorProfileInfoGridProps> = ({
 	return (
 		<div
 			className={cn(
-				'grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4',
+				'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4',
+				CREATOR_CARD_STAT_GRID_GAP_CLASS,
 				className
 			)}
 		>
