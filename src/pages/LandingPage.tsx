@@ -43,7 +43,7 @@ import {
 	CREATOR_CARD_ENTRY_CLASS,
 	creatorCardEntryStyle,
 } from '@/utils/cardEntryAnimation.utils';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, ChevronDown, RefreshCw } from 'lucide-react';
 import ClearedFiltersEmptyState from '@/components/common/ClearedFiltersEmptyState';
 import CreatorListPagination from '@/components/common/CreatorListPagination';
 
@@ -55,6 +55,29 @@ const FEATURED_CREATOR_FACTS = [
 ];
 
 const FEATURED_CREATOR_FOLLOWER_COUNT: number | null = null;
+const FEATURED_CREATOR_KEY_HOLDER_COUNT = 0;
+
+const getFeaturedCreatorKeyHolderCopy = (count: number | null) => {
+	if (count == null) {
+		return {
+			value: 'Key holders unavailable',
+			explanation: 'Key holder data is not available yet.',
+		};
+	}
+
+	if (count === 0) {
+		return {
+			value: 'No key holders yet',
+			explanation:
+				'This creator has not unlocked any key holders yet. Be the first to buy a key and start the collector base.',
+		};
+	}
+
+	return {
+		value: `${formatCompactNumber(count)} key holders`,
+		explanation: 'Number of wallets that currently hold at least one key.',
+	};
+};
 
 // Fallback demo data in case API fails
 const DEMO_CREATORS: Course[] = [
@@ -411,6 +434,9 @@ function LandingPage() {
 		const start = safePage * PAGE_SIZE;
 		return filteredCreators.slice(start, start + PAGE_SIZE);
 	}, [filteredCreators, safePage]);
+	const featuredCreatorKeyHolderCopy = getFeaturedCreatorKeyHolderCopy(
+		FEATURED_CREATOR_KEY_HOLDER_COUNT
+	);
 
 	useEffect(() => {
 		if (pendingScrollRestoreRef.current == null) return;
@@ -652,8 +678,22 @@ function LandingPage() {
 									onPageChange={handlePageChange}
 									className="mt-8"
 								/>
-								{safePage >= totalPages - 1 && (
-									<p
+								{safePage < totalPages - 1 && (
+									<div className="mt-4 flex justify-center">
+										<Button
+											type="button"
+											variant="outline"
+											onClick={() => handlePageChange(safePage + 1)}
+											aria-label="Load more creators"
+											className="sr-only rounded-full border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white shadow-none focus:not-sr-only focus:flex focus:items-center focus:gap-2 focus:outline-none focus:ring-2 focus:ring-amber-400/60 focus:ring-offset-2 focus:ring-offset-slate-950"
+										>
+											<ChevronDown className="size-4" aria-hidden="true" />
+											Load more creators
+										</Button>
+									</div>
+								)}
+									{safePage >= totalPages - 1 && (
+										<p
 										role="status"
 										aria-live="polite"
 										className="mt-4 text-center text-xs font-semibold uppercase tracking-[0.18em] text-white/45"
@@ -765,8 +805,8 @@ function LandingPage() {
 										/>
 										<MiniStatChip
 											label="Audience"
-											value="12.4K collectors"
-											explanation="Number of wallets that currently hold at least one of this creator's keys."
+											value={featuredCreatorKeyHolderCopy.value}
+											explanation={featuredCreatorKeyHolderCopy.explanation}
 										/>
 										<MiniStatChip
 											label="Access"

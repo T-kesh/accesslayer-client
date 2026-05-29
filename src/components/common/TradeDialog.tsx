@@ -12,6 +12,9 @@ import {
 import { cn } from '@/lib/utils';
 import { formatNumber } from '@/utils/numberFormat.utils';
 import PercentageBadge from '@/components/common/PercentageBadge';
+import NetworkFeeHint from '@/components/common/NetworkFeeHint';
+import { TRADE_FEE_ESTIMATE } from '@/constants/fees';
+import { formatTransactionFeeDisplay } from '@/utils/transactionFee.utils';
 
 export type TradeSide = 'buy' | 'sell';
 
@@ -54,6 +57,10 @@ const TradeDialog: React.FC<TradeDialogProps> = ({
 
 	const title = side === 'buy' ? 'Buy keys' : 'Sell keys';
 	const confirmLabel = side === 'buy' ? 'Confirm buy' : 'Confirm sell';
+	const estimatedNetworkFee = formatTransactionFeeDisplay(
+		TRADE_FEE_ESTIMATE.DEFAULT_NETWORK_FEE,
+		{ unit: TRADE_FEE_ESTIMATE.UNIT }
+	);
 
 	return (
 		<Dialog
@@ -124,6 +131,13 @@ const TradeDialog: React.FC<TradeDialogProps> = ({
 								/>
 							)}
 					</div>
+					{side === 'buy' && (
+						<NetworkFeeHint
+							variant="text"
+							fee={estimatedNetworkFee}
+							className="text-white/45"
+						/>
+					)}
 					{side === 'sell' && parsedAmount > availableHoldings && (
 						<div className="text-xs text-red-300">
 							You can’t sell more than your current holdings.
