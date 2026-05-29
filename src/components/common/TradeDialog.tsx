@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { StableButtonContent } from '@/components/ui/stable-button-content';
 import {
 	Dialog,
 	DialogContent,
@@ -55,7 +56,10 @@ const TradeDialog: React.FC<TradeDialogProps> = ({
 	const confirmLabel = side === 'buy' ? 'Confirm buy' : 'Confirm sell';
 
 	return (
-		<Dialog open={open} onOpenChange={next => !isSubmitting && onOpenChange(next)}>
+		<Dialog
+			open={open}
+			onOpenChange={next => !isSubmitting && onOpenChange(next)}
+		>
 			<DialogContent
 				className="max-w-md"
 				showCloseButton={!isSubmitting}
@@ -91,14 +95,18 @@ const TradeDialog: React.FC<TradeDialogProps> = ({
 						className={cn(
 							'w-full rounded-xl border bg-white/[0.04] px-3 py-2 text-white outline-none transition-colors',
 							'border-white/10 focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/15',
-							!amountValid && amountText.trim() ? 'border-red-500/40' : ''
+							!amountValid && amountText.trim()
+								? 'border-red-500/40'
+								: ''
 						)}
 						aria-label="Trade amount"
 						data-focus-order="1"
 						data-testid="trade-dialog-amount"
 					/>
 					<div className="flex flex-wrap items-center gap-2 text-xs text-white/45">
-						<span aria-label={`Current wallet holdings: ${formatNumber(availableHoldings)} keys`}>
+						<span
+							aria-label={`Current wallet holdings: ${formatNumber(availableHoldings)} keys`}
+						>
 							Holdings: {formatNumber(availableHoldings)} keys
 						</span>
 						{side === 'sell' &&
@@ -109,7 +117,9 @@ const TradeDialog: React.FC<TradeDialogProps> = ({
 									label="of holdings"
 									value={(parsedAmount / availableHoldings) * 100}
 									tone={
-										parsedAmount > availableHoldings ? 'negative' : 'neutral'
+										parsedAmount > availableHoldings
+											? 'negative'
+											: 'neutral'
 									}
 								/>
 							)}
@@ -145,10 +155,16 @@ const TradeDialog: React.FC<TradeDialogProps> = ({
 						type="button"
 						onClick={() => onConfirm(parsedAmount)}
 						disabled={!amountValid || isSubmitting}
+						aria-busy={isSubmitting || undefined}
 						data-focus-order="3"
 						data-testid="trade-dialog-confirm"
 					>
-						{isSubmitting ? 'Submitting…' : confirmLabel}
+						<StableButtonContent
+							isLoading={isSubmitting}
+							loadingLabel="Submitting…"
+						>
+							{confirmLabel}
+						</StableButtonContent>
 					</Button>
 				</DialogFooter>
 			</DialogContent>
