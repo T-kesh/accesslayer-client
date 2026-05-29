@@ -1,0 +1,60 @@
+import { STROOPS_PER_XLM } from '@/constants/stellar';
+import { formatNumber } from '@/utils/numberFormat.utils';
+
+export interface CreatorKeyPriceFields {
+	priceStroops?: number | null;
+	/** Legacy demo field interpreted as whole XLM when stroops are absent. */
+	price?: number | null;
+}
+
+/**
+ * Resolves the on-chain key price in stroops from explicit stroops or legacy XLM.
+ */
+export function resolveCreatorKeyPriceStroops(
+	creator: CreatorKeyPriceFields
+): number | null {
+	if (creator.priceStroops != null && Number.isFinite(creator.priceStroops)) {
+		return creator.priceStroops;
+	}
+	if (creator.price != null && Number.isFinite(creator.price)) {
+		return Math.round(creator.price * STROOPS_PER_XLM);
+	}
+	return null;
+}
+
+/**
+ * Formats a stroop amount for display as XLM, falling back to stroops when the
+ * XLM value would round to zero at the default display precision.
+ */
+export function formatDisplayKeyPrice(
+	stroops: number | null | undefined
+): string {
+	if (stroops == null || !Number.isFinite(stroops)) {
+		return '—';
+	}
+
+	const xlm = stroops / STROOPS_PER_XLM;
+	const xlmFormatted = formatNumber(xlm, {
+		maximumFractionDigits: 4,
+		minimumFractionDigits: 0,
+	});
+
+	const parsedXlm = Number.parseFloat(xlmFormatted.replace(/,/g, ''));
+	const xlmWouldRoundToZero =
+		stroops > 0 && (!Number.isFinite(parsedXlm) || parsedXlm === 0);
+
+	if (xlmWouldRoundToZero) {
+		return `${stroops.toLocaleString()} stroops`;
+	}
+
+	return `${xlmFormatted} XLM`;
+}
+
+/**
+ * Convenience helper for creator records that may store stroops or legacy XLM.
+ */
+export function formatCreatorKeyPriceDisplay(
+	creator: CreatorKeyPriceFields
+): string {
+	return formatDisplayKeyPrice(resolveCreatorKeyPriceStroops(creator));
+}
