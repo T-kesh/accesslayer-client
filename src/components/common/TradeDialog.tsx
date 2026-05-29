@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { formatNumber } from '@/utils/numberFormat.utils';
+import { formatDisplayKeyPrice } from '@/utils/keyPriceDisplay.utils';
 import PercentageBadge from '@/components/common/PercentageBadge';
 
 export type TradeSide = 'buy' | 'sell';
@@ -20,6 +21,8 @@ export interface TradeDialogProps {
 	side: TradeSide;
 	creatorName: string;
 	availableHoldings: number;
+	/** Per-key price in stroops, shown on the buy confirmation step. */
+	keyPriceStroops?: number | null;
 	onOpenChange: (open: boolean) => void;
 	onConfirm: (amount: number) => Promise<void> | void;
 	isSubmitting?: boolean;
@@ -30,6 +33,7 @@ const TradeDialog: React.FC<TradeDialogProps> = ({
 	side,
 	creatorName,
 	availableHoldings,
+	keyPriceStroops,
 	onOpenChange,
 	onConfirm,
 	isSubmitting = false,
@@ -83,6 +87,15 @@ const TradeDialog: React.FC<TradeDialogProps> = ({
 							: `Sell creator keys for ${creatorName}.`}
 					</DialogDescription>
 				</DialogHeader>
+
+				{side === 'buy' && keyPriceStroops != null && (
+					<p className="text-sm text-white/60">
+						Unit price:{' '}
+						<span className="font-semibold text-amber-300/90 tabular-nums">
+							{formatDisplayKeyPrice(keyPriceStroops)}
+						</span>
+					</p>
+				)}
 
 				<div className="space-y-2">
 					<div className="text-sm text-white/70">Amount</div>

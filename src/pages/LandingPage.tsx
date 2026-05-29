@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { LayoutGroup, motion } from 'framer-motion';
 import { courseService, type Course } from '@/services/course.service';
 import SkipToContent from '@/components/common/SkipToContent';
 import { cn } from '@/lib/utils';
@@ -43,6 +44,8 @@ import {
 	CREATOR_CARD_ENTRY_CLASS,
 	creatorCardEntryStyle,
 } from '@/utils/cardEntryAnimation.utils';
+import { resolveCreatorKeyPriceStroops } from '@/utils/keyPriceDisplay.utils';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import ClearedFiltersEmptyState from '@/components/common/ClearedFiltersEmptyState';
 import CreatorListPagination from '@/components/common/CreatorListPagination';
@@ -63,6 +66,8 @@ const DEMO_CREATORS: Course[] = [
 		title: 'Alex Rivers',
 		description: 'Digital Artist & Illustrator',
 		price: 0.05,
+		priceStroops: 500_000,
+		nextDropAt: new Date(Date.now() + 86_400_000).toISOString(),
 		creatorShareSupply: 120,
 		instructorId: 'arivers',
 		category: 'Art',
@@ -76,6 +81,7 @@ const DEMO_CREATORS: Course[] = [
 		title: 'Sarah Chen',
 		description: 'Solidity Developer',
 		price: 0.12,
+		priceStroops: 1_200_000,
 		creatorShareSupply: 64,
 		instructorId: 'schen_dev',
 		category: 'Tech',
@@ -102,6 +108,8 @@ const DEMO_CREATORS: Course[] = [
 		title: 'Elena Vance',
 		description: 'UI/UX Designer',
 		price: 0.04,
+		priceStroops: 400_000,
+		nextDropAt: new Date(Date.now() + 3_600_000).toISOString(),
 		creatorShareSupply: 150,
 		instructorId: 'evance_design',
 		category: 'Design',
@@ -214,6 +222,7 @@ function LandingPage() {
 	const [tradeSide, setTradeSide] = useState<TradeSide>('buy');
 	const [tradeDialogOpen, setTradeDialogOpen] = useState(false);
 	const [tradeSubmitting, setTradeSubmitting] = useState(false);
+	const prefersReducedMotion = usePrefersReducedMotion();
 	const [sortOption, setSortOption] = useState<SortOption>(() => {
 		if (typeof window === 'undefined') return 'featured';
 		const saved = window.localStorage.getItem(
@@ -367,12 +376,15 @@ function LandingPage() {
 					.includes(trimmedSearchQuery.toLowerCase())
 		);
 		const sorted = [...filtered];
+		const priceOf = (creator: Course) =>
+			resolveCreatorKeyPriceStroops(creator) ?? 0;
+
 		switch (sortOption) {
 			case 'price-asc':
-				sorted.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+				sorted.sort((a, b) => priceOf(a) - priceOf(b));
 				break;
 			case 'price-desc':
-				sorted.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+				sorted.sort((a, b) => priceOf(b) - priceOf(a));
 				break;
 			case 'supply-desc':
 				sorted.sort(
@@ -630,22 +642,34 @@ function LandingPage() {
 										className="self-start"
 									/>
 								)}
-								<div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-									{pagedCreators.map((creator, index) => (
-										// #300: staggered entry animation; the
-										// helper no-ops on prefers-reduced-motion.
-										<div
-											key={creator.id}
-											className={CREATOR_CARD_ENTRY_CLASS}
-											style={creatorCardEntryStyle(index)}
-										>
-											<CreatorCard
-												creator={creator}
-												isPriceRefreshing={isPriceRefreshing}
-											/>
-										</div>
-									))}
-								</div>
+								<LayoutGroup>
+									<div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+										{pagedCreators.map((creator, index) => (
+											// #300: staggered entry animation; the
+											// helper no-ops on prefers-reduced-motion.
+											// #355: layout transition when sort order changes.
+											<motion.div
+												key={creator.id}
+												layout={!prefersReducedMotion}
+												transition={{
+													type: 'spring',
+													stiffness: 520,
+													damping: 42,
+													mass: 0.85,
+												}}
+												className={CREATOR_CARD_ENTRY_CLASS}
+												style={creatorCardEntryStyle(index, {
+													prefersReducedMotion,
+												})}
+											>
+												<CreatorCard
+													creator={creator}
+													isPriceRefreshing={isPriceRefreshing}
+												/>
+											</motion.div>
+										))}
+									</div>
+								</LayoutGroup>
 								<CreatorListPagination
 									page={safePage}
 									totalPages={totalPages}
@@ -924,6 +948,7 @@ function LandingPage() {
 				side={tradeSide}
 				creatorName="Alex Rivers"
 				availableHoldings={featuredHoldings}
+				keyPriceStroops={resolveCreatorKeyPriceStroops(DEMO_CREATORS[0])}
 				isSubmitting={tradeSubmitting}
 				onOpenChange={setTradeDialogOpen}
 				onConfirm={handleConfirmTrade}
