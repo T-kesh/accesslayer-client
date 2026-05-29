@@ -10,7 +10,9 @@ import TradeDialog from '@/components/common/TradeDialog';
  * DOM (which would also swap them in the tab sequence) or remove markers.
  */
 describe('TradeDialog focus order', () => {
-	function renderDialog(overrides: Partial<React.ComponentProps<typeof TradeDialog>> = {}) {
+	function renderDialog(
+		overrides: Partial<React.ComponentProps<typeof TradeDialog>> = {}
+	) {
 		return render(
 			<TradeDialog
 				open={true}
@@ -45,9 +47,12 @@ describe('TradeDialog focus order', () => {
 		renderDialog();
 
 		const elements = Array.from(
-			document.querySelectorAll('[data-slot="dialog-close"], [data-focus-order]')
+			document.querySelectorAll(
+				'[data-slot="dialog-close"], [data-focus-order]'
+			)
 		).map(el => ({
-			identifier: el.getAttribute('data-testid') || el.getAttribute('data-slot'),
+			identifier:
+				el.getAttribute('data-testid') || el.getAttribute('data-slot'),
 			order: el.getAttribute('data-focus-order') || '0',
 		}));
 
@@ -74,6 +79,17 @@ describe('TradeDialog focus order', () => {
 
 		const cancel = screen.getByTestId('trade-dialog-cancel');
 		expect(cancel.getAttribute('tabindex')).not.toBe('-1');
+	});
+
+	it('reserves the confirm button width while showing the submitting state', () => {
+		renderDialog({ isSubmitting: true });
+
+		const confirm = screen.getByTestId('trade-dialog-confirm');
+
+		expect(confirm).toHaveAttribute('aria-busy', 'true');
+		expect(screen.getByText('Confirm buy')).toHaveClass('invisible');
+		expect(screen.getByText('Submitting…')).toBeVisible();
+		expect(confirm.querySelector('.animate-spin')).toBeInTheDocument();
 	});
 
 	it('preserves the same focus order in the sell variant', () => {
