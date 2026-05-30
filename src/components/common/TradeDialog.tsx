@@ -16,6 +16,7 @@ import PercentageBadge from '@/components/common/PercentageBadge';
 import NetworkFeeHint from '@/components/common/NetworkFeeHint';
 import { TRADE_FEE_ESTIMATE } from '@/constants/fees';
 import { formatTransactionFeeDisplay } from '@/utils/transactionFee.utils';
+import { normalizeCreatorDisplayName } from '@/utils/creatorDisplayName.utils';
 
 export type TradeSide = 'buy' | 'sell';
 
@@ -59,6 +60,8 @@ const TradeDialog: React.FC<TradeDialogProps> = ({
 		parsedAmount > 0 &&
 		(side !== 'sell' || parsedAmount <= availableHoldings);
 
+	const displayCreatorName =
+		normalizeCreatorDisplayName(creatorName) || 'Unnamed creator';
 	const title = side === 'buy' ? 'Buy keys' : 'Sell keys';
 	const confirmLabel = side === 'buy' ? 'Confirm buy' : 'Confirm sell';
 	const estimatedNetworkFee = formatTransactionFeeDisplay(
@@ -90,8 +93,8 @@ const TradeDialog: React.FC<TradeDialogProps> = ({
 					<DialogTitle>{title}</DialogTitle>
 					<DialogDescription>
 						{side === 'buy'
-							? `Purchase creator keys for ${creatorName}.`
-							: `Sell creator keys for ${creatorName}.`}
+							? `Purchase creator keys for ${displayCreatorName}.`
+							: `Sell creator keys for ${displayCreatorName}.`}
 					</DialogDescription>
 				</DialogHeader>
 

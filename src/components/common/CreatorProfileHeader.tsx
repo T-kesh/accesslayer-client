@@ -9,6 +9,7 @@ import VerifiedBadge from '@/components/common/VerifiedBadge';
 import CreatorInitialsAvatar from '@/components/common/CreatorInitialsAvatar';
 import CreatorBio from '@/components/common/CreatorBio';
 import { formatCreatorHandle } from '@/utils/handleDisplay.utils';
+import { normalizeCreatorDisplayName } from '@/utils/creatorDisplayName.utils';
 import { CREATOR_CARD_MEDIA_RADIUS_CLASS } from '@/utils/creatorCardTokens';
 
 interface CreatorProfileHeaderProps {
@@ -47,6 +48,7 @@ const CreatorProfileHeader: React.FC<CreatorProfileHeaderProps> = ({
 	// Display-normalised handle; raw `handle` is preserved for any equality /
 	// URL construction the caller might do via the prop.
 	const displayHandle = formatCreatorHandle(handle);
+	const displayName = normalizeCreatorDisplayName(name) || 'Unnamed creator';
 
 	const handleShare = async () => {
 		let url = window.location.href;
@@ -57,7 +59,7 @@ const CreatorProfileHeader: React.FC<CreatorProfileHeaderProps> = ({
 		if (navigator.share) {
 			try {
 				await navigator.share({
-					title: `${name} (${displayHandle || `@${handle}`}) on Access Layer`,
+					title: `${displayName} (${displayHandle || `@${handle}`}) on Access Layer`,
 					url,
 				});
 			} catch (err) {
@@ -105,19 +107,27 @@ const CreatorProfileHeader: React.FC<CreatorProfileHeaderProps> = ({
 							CREATOR_CARD_MEDIA_RADIUS_CLASS
 						)}
 					>
-						<CreatorInitialsAvatar name={name} creatorId={creatorId} imageSrc={avatarUrl} />
+						<CreatorInitialsAvatar
+							name={displayName}
+							creatorId={creatorId}
+							imageSrc={avatarUrl}
+						/>
 					</motion.div>
 					<div className="min-w-0 space-y-0.5">
 						<div className="flex items-center gap-2 overflow-hidden">
 							<motion.h1
 								id="creator-profile-name"
-								animate={{ fontSize: isScrolled ? '1.25rem' : '1.875rem' }}
+								animate={{
+									fontSize: isScrolled ? '1.25rem' : '1.875rem',
+								}}
 								className={cn(
-									"truncate font-grotesque font-black tracking-tight text-white transition-all duration-300",
-									isScrolled ? "text-xl md:text-2xl" : "text-3xl md:text-4xl"
+									'truncate font-grotesque font-black tracking-tight text-white transition-all duration-300',
+									isScrolled
+										? 'text-xl md:text-2xl'
+										: 'text-3xl md:text-4xl'
 								)}
 							>
-								{name}
+								{displayName}
 							</motion.h1>
 							{isVerified && (
 								<div className="shrink-0">
@@ -150,16 +160,18 @@ const CreatorProfileHeader: React.FC<CreatorProfileHeaderProps> = ({
 					</div>
 				</div>
 
-				<div className={cn(
-					"flex items-center gap-3 transition-transform duration-300",
-					isScrolled ? "scale-90" : "scale-100"
-				)}>
+				<div
+					className={cn(
+						'flex items-center gap-3 transition-transform duration-300',
+						isScrolled ? 'scale-90' : 'scale-100'
+					)}
+				>
 					<Button
 						onClick={handleShare}
 						variant="outline"
 						className={cn(
-							"rounded-xl border-white/10 bg-white/5 font-bold text-white transition-all hover:border-amber-500/30 hover:bg-amber-500/10 active:scale-95",
-							isScrolled ? "h-9 px-3 text-xs" : "h-11 px-4 text-sm"
+							'rounded-xl border-white/10 bg-white/5 font-bold text-white transition-all hover:border-amber-500/30 hover:bg-amber-500/10 active:scale-95',
+							isScrolled ? 'h-9 px-3 text-xs' : 'h-11 px-4 text-sm'
 						)}
 					>
 						{copied ? (
@@ -170,7 +182,11 @@ const CreatorProfileHeader: React.FC<CreatorProfileHeaderProps> = ({
 							<Copy className="mr-2 size-4 text-amber-500" />
 						)}
 						<span className="hidden sm:inline">
-							{copied ? 'Copied!' : canNativeShare ? 'Share Profile' : 'Copy Profile Link'}
+							{copied
+								? 'Copied!'
+								: canNativeShare
+									? 'Share Profile'
+									: 'Copy Profile Link'}
 						</span>
 						<span className="sm:hidden">
 							{copied ? 'Copied' : canNativeShare ? 'Share' : 'Copy'}

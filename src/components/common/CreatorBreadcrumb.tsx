@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { normalizeCreatorDisplayName } from '@/utils/creatorDisplayName.utils';
 
 interface CreatorBreadcrumbProps {
 	parentLabel: string;
@@ -16,6 +17,9 @@ const CreatorBreadcrumb: React.FC<CreatorBreadcrumbProps> = ({
 	currentLabel,
 	className,
 }) => {
+	const displayCurrentLabel =
+		normalizeCreatorDisplayName(currentLabel) || 'Unnamed creator';
+
 	return (
 		<nav
 			aria-label="Breadcrumb"
@@ -32,7 +36,7 @@ const CreatorBreadcrumb: React.FC<CreatorBreadcrumbProps> = ({
 			</Link>
 			<ChevronRight className="size-4 text-white/30" />
 			<span className="font-bold text-white truncate max-w-[150px] sm:max-w-none">
-				{currentLabel}
+				{displayCurrentLabel}
 			</span>
 		</nav>
 	);
