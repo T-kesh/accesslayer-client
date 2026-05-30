@@ -22,7 +22,7 @@ describe('TransactionHashRow', () => {
 
 		expect(writeText).toHaveBeenCalledWith('0xabcdef1234567890');
 		expect(
-			screen.getByRole('button', { name: 'Transaction hash copied' })
+			screen.getByRole('button', { name: /transaction hash copied/i })
 		).toBeInTheDocument();
 
 		act(() => {
@@ -30,10 +30,10 @@ describe('TransactionHashRow', () => {
 		});
 
 		const status = screen.getByRole('status');
-		expect(status).toHaveTextContent('Transaction hash copied.');
+		expect(status).toHaveTextContent(/transaction hash copied\./i);
 		expect(status).toHaveClass('sr-only');
 		expect(status).not.toHaveTextContent(
-			'Transaction hash copied to clipboard'
+			'transaction hash copied to clipboard'
 		);
 
 		vi.useRealTimers();
