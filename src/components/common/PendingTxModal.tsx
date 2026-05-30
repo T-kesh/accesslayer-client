@@ -11,6 +11,17 @@ import { Button } from '@/components/ui/button';
 import CircularSpinner from '@/components/common/CircularSpinnerProps';
 import { cn } from '@/lib/utils';
 import TransactionHashRow from '@/components/common/TransactionHashRow';
+import {
+	getConfirmationStatus,
+	getConfirmationTone,
+} from '@/utils/transaction.utils';
+import { Tooltip } from '@/components/ui/tooltip';
+
+const confirmationToneClasses = {
+	neutral: 'border-slate-500/30 bg-slate-500/20 text-slate-400',
+	warning: 'border-amber-500/30 bg-amber-500/20 text-amber-300',
+	success: 'border-emerald-500/30 bg-emerald-500/20 text-emerald-400',
+} as const;
 
 export interface PendingTxModalProps {
 	open: boolean;
@@ -30,6 +41,8 @@ export interface PendingTxModalProps {
 		label: string;
 		onClick: () => void;
 	};
+	/** Optional block confirmation count */
+	confirmations?: number;
 }
 
 const PendingTxModal: React.FC<PendingTxModalProps> = ({
@@ -42,11 +55,19 @@ const PendingTxModal: React.FC<PendingTxModalProps> = ({
 	explorerUrl,
 	blockDismissal = false,
 	action,
+	confirmations,
 }) => {
 	const handleOpenChange = (next: boolean) => {
 		if (!next && blockDismissal && isLoading) return;
 		onOpenChange?.(next);
 	};
+
+	const confirmationStatus =
+		confirmations !== undefined ? getConfirmationStatus(confirmations) : undefined;
+	const confirmationTone =
+		confirmationStatus !== undefined
+			? getConfirmationTone(confirmationStatus)
+			: undefined;
 
 	return (
 		<Dialog open={open} onOpenChange={handleOpenChange}>
@@ -93,6 +114,24 @@ const PendingTxModal: React.FC<PendingTxModalProps> = ({
 					<DialogDescription className="text-center">
 						{description}
 					</DialogDescription>
+					
+					{confirmationStatus !== undefined && confirmationTone !== undefined && (
+						<div className="mt-4 flex flex-col items-center gap-2">
+							<Tooltip content={`${confirmations} block confirmations`}>
+								<span
+									className={cn(
+										'inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wider',
+										confirmationToneClasses[confirmationTone]
+									)}
+								>
+									{confirmationStatus}
+								</span>
+							</Tooltip>
+							<p className="text-[10px] font-medium uppercase tracking-widest text-white/40">
+								{confirmations} confirmations
+							</p>
+						</div>
+					)}
 				</DialogHeader>
 
 				{txHash && (

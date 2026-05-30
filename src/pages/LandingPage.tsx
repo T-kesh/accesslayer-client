@@ -31,6 +31,7 @@ import NetworkMismatchBanner from '@/components/common/NetworkMismatchBanner';
 import StellarConnectionQualityBadge from '@/components/common/StellarConnectionQualityBadge';
 import { useNetworkMismatch } from '@/hooks/useNetworkMismatch';
 import showToast from '@/utils/toast.util';
+import { getSignatureErrorMessage } from '@/utils/errorHandling.utils';
 import { formatCompactNumber, formatNumber } from '@/utils/numberFormat.utils';
 import PrecisionModeToggle, {
 	type PrecisionMode,
@@ -518,9 +519,9 @@ function LandingPage() {
 					: `Holdings refreshed: -${formatNumber(amount)} keys.`
 			);
 			setTradeDialogOpen(false);
-		} catch {
+		} catch (error) {
 			setFeaturedHoldings(previousHoldings);
-			showToast.error('Trade failed. Holdings have been restored.');
+			showToast.error(getSignatureErrorMessage(error));
 		} finally {
 			setTradeSubmitting(false);
 		}

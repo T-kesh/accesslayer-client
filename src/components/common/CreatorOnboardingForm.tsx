@@ -109,6 +109,8 @@ export const CreatorOnboardingForm: React.FC<
 				placeholder="Tell us about yourself..."
 				touched={touched.bio}
 				rows={4}
+				maxLength={200}
+				showCharacterCount={true}
 			/>
 
 			<FormInput

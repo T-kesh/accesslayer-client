@@ -22,6 +22,7 @@ interface FormInputProps {
 	suffix?: React.ReactNode;
 	// Optional wrapper className for the input container
 	wrapperClassName?: string;
+	showCharacterCount?: boolean;
 }
 
 export const FormInput: React.FC<FormInputProps> = ({
@@ -42,6 +43,7 @@ export const FormInput: React.FC<FormInputProps> = ({
 	prefix,
 	suffix,
 	wrapperClassName = '',
+	showCharacterCount = false,
 }) => {
 	// Local display state is used only for number inputs so we can
 	// show formatted (comma separated) values while keeping the
@@ -198,16 +200,33 @@ export const FormInput: React.FC<FormInputProps> = ({
 			</label>
 
 			{renderInputWithElements()}
-
-			{hasError && (
-				<p
-					id={`${inputId}-error`}
-					className="text-sm text-red-600"
-					role="alert"
-				>
-					{error}
-				</p>
-			)}
+			
+			<div className="flex justify-between items-start gap-2">
+				<div className="flex-1">
+					{hasError && (
+						<p
+							id={`${inputId}-error`}
+							className="text-sm text-red-600"
+							role="alert"
+						>
+							{error}
+						</p>
+					)}
+				</div>
+				{showCharacterCount && maxLength && (
+					<div 
+						className={cn(
+							"text-xs font-medium tabular-nums",
+							maxLength - String(value).length < 20 
+								? "text-amber-500" 
+								: "text-gray-400"
+						)}
+						aria-live="polite"
+					>
+						{String(value).length} / {maxLength}
+					</div>
+				)}
+			</div>
 		</div>
 	);
 };
