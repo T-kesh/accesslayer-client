@@ -47,7 +47,15 @@ import {
 	CREATOR_CARD_ENTRY_CLASS,
 	creatorCardEntryStyle,
 } from '@/utils/cardEntryAnimation.utils';
-import { resolveCreatorKeyPriceStroops } from '@/utils/keyPriceDisplay.utils';
+import {
+	formatDisplayKeyPrice,
+	resolveCreatorKeyPriceStroops,
+} from '@/utils/keyPriceDisplay.utils';
+import {
+	calculatePortfolioValue,
+	formatPortfolioValueDisplay,
+	getPortfolioValueHelperText,
+} from '@/utils/portfolioValue.utils';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { CREATOR_LIST_SORT_LAYOUT_TRANSITION } from '@/utils/creatorListSortTransition';
 import { AlertCircle, ChevronDown, RefreshCw } from 'lucide-react';
@@ -181,6 +189,7 @@ const MAX_CREATOR_FETCH_RETRIES = 3;
 const BASE_RETRY_DELAY_MS = 800;
 const PAGE_SIZE = 6;
 const FETCH_RETRY_ACTION_LABEL = 'Try again';
+const DEMO_HELD_KEY_QUANTITIES = [0, 2, 1] as const;
 const FINAL_FETCH_ERROR_COPY =
 	'Unable to load live creators right now. Showing fallback creators.';
 
@@ -234,7 +243,9 @@ function LandingPage() {
 	// Last successful fetch timestamp (#301). `null` means we've never
 	// resolved a load yet — the staleness helper treats that as "stale"
 	// so the warning surfaces if the load hangs.
-	const [creatorsFetchedAt, setCreatorsFetchedAt] = useState<number | null>(null);
+	const [creatorsFetchedAt, setCreatorsFetchedAt] = useState<number | null>(
+		null
+	);
 	const { isMismatch: isNetworkMismatch } = useNetworkMismatch();
 	const [isLoading, setIsLoading] = useState(true);
 	const [isFilterLoading, setIsFilterLoading] = useState(false);
@@ -495,6 +506,39 @@ function LandingPage() {
 		}
 	);
 
+	const heldKeyPositions = useMemo(
+		() =>
+			creators.map((creator, index) => ({
+				creatorId: creator.id,
+				quantity:
+					index === 0
+						? featuredHoldings
+						: (DEMO_HELD_KEY_QUANTITIES[index] ?? 0),
+				priceStroops: creator.priceStroops,
+				price: creator.price,
+				isPriceLoading: isPriceRefreshing,
+				isPriceStale: creatorsAreStale,
+			})),
+		[creators, creatorsAreStale, featuredHoldings, isPriceRefreshing]
+	);
+	const portfolioValue = useMemo(
+		() => calculatePortfolioValue(heldKeyPositions),
+		[heldKeyPositions]
+	);
+	const displayedPortfolioValue = isLoading
+		? {
+				...portfolioValue,
+				status: 'loading' as const,
+				totalStroops: null,
+			}
+		: portfolioValue;
+	const portfolioValueDisplay = formatPortfolioValueDisplay(
+		displayedPortfolioValue
+	);
+	const portfolioValueHelperText = getPortfolioValueHelperText(
+		displayedPortfolioValue
+	);
+
 	const openTradeDialog = (side: TradeSide) => {
 		setTradeSide(side);
 		setTradeDialogOpen(true);
@@ -538,7 +582,10 @@ function LandingPage() {
 
 	return (
 		<div className="relative min-h-screen overflow-x-hidden bg-[linear-gradient(160deg,#08111f_0%,#10213b_45%,#f0b14d_160%)] px-6 pt-12 pb-28 md:px-12 md:pb-12">
-			<SkipToContent targetId="main-creator-list" label="Skip to creator list" />
+			<SkipToContent
+				targetId="main-creator-list"
+				label="Skip to creator list"
+			/>
 			{/* #306: the outer wrapper is just a decorative shell; the actual
 			    landmark structure is a top-level <header> sibling of the <main>
 			    below, so screen-reader landmark navigation lands directly on the
@@ -616,8 +663,12 @@ function LandingPage() {
 								>
 									<option value="featured">Featured</option>
 									<option value="price-asc">Price: Low to high</option>
-									<option value="price-desc">Price: High to low</option>
-									<option value="supply-desc">Supply: High to low</option>
+									<option value="price-desc">
+										Price: High to low
+									</option>
+									<option value="supply-desc">
+										Supply: High to low
+									</option>
 								</select>
 							</div>
 						</div>
@@ -646,7 +697,11 @@ function LandingPage() {
 									</div>
 									<div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 opacity-50">
 										{pagedCreators.map(creator => (
-											<CreatorCard key={creator.id} creator={creator} isPriceRefreshing={isPriceRefreshing} />
+											<CreatorCard
+												key={creator.id}
+												creator={creator}
+												isPriceRefreshing={isPriceRefreshing}
+											/>
 										))}
 									</div>
 								</div>
@@ -716,11 +771,16 @@ function LandingPage() {
 											<Button
 												type="button"
 												variant="outline"
-												onClick={() => handlePageChange(safePage + 1)}
+												onClick={() =>
+													handlePageChange(safePage + 1)
+												}
 												aria-label="Load more creators"
 												className="sr-only rounded-full border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white shadow-none focus:not-sr-only focus:flex focus:items-center focus:gap-2 focus:outline-none focus:ring-2 focus:ring-amber-400/60 focus:ring-offset-2 focus:ring-offset-slate-950"
 											>
-												<ChevronDown className="size-4" aria-hidden="true" />
+												<ChevronDown
+													className="size-4"
+													aria-hidden="true"
+												/>
 												Load more creators
 											</Button>
 										</div>
@@ -764,7 +824,94 @@ function LandingPage() {
 						</MarketplaceSection>
 					</SectionErrorBoundary>
 
-					<SectionDivider title="Creator profile pattern" spacing="relaxed" />
+					<SectionDivider title="Holdings overview" spacing="relaxed" />
+					<MarketplaceSection
+						aria-labelledby="holdings-overview-heading"
+						spacing="default"
+						className="marketplace-card-surface rounded-[2rem] border p-6 shadow-[0_24px_80px_-60px_rgba(8,17,31,0.95)] backdrop-blur-sm md:p-8"
+					>
+						<div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+							<div>
+								<p className="mb-2 text-xs font-bold uppercase tracking-[0.24em] text-amber-300/80">
+									Your holdings
+								</p>
+								<h2
+									id="holdings-overview-heading"
+									className="font-grotesque text-2xl font-black tracking-tight text-white"
+								>
+									Total portfolio value
+								</h2>
+								<p className="mt-2 max-w-2xl font-jakarta text-sm leading-relaxed text-white/60">
+									Aggregates every creator key position currently held
+									by this wallet using the latest available key prices.
+								</p>
+							</div>
+							<div
+								role="status"
+								aria-live="polite"
+								aria-busy={
+									displayedPortfolioValue.status === 'loading' ||
+									undefined
+								}
+								className="rounded-2xl border border-white/10 bg-slate-950/45 px-5 py-4 text-left md:min-w-64"
+							>
+								<div className="text-[0.65rem] font-bold uppercase tracking-[0.2em] text-white/45">
+									Portfolio total
+								</div>
+								<div className="mt-1 flex items-center gap-2 font-grotesque text-3xl font-black text-white">
+									{displayedPortfolioValue.status === 'loading' && (
+										<span
+											className="size-4 animate-spin rounded-full border-2 border-amber-400/25 border-t-amber-400"
+											aria-hidden="true"
+										/>
+									)}
+									{portfolioValueDisplay}
+								</div>
+								<p className="mt-2 text-xs leading-relaxed text-white/55">
+									{portfolioValueHelperText}
+								</p>
+							</div>
+						</div>
+						<div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+							{heldKeyPositions
+								.filter(
+									position =>
+										position.quantity && position.quantity > 0
+								)
+								.map(position => {
+									const creator = creators.find(
+										item => item.id === position.creatorId
+									);
+									return (
+										<div
+											key={position.creatorId}
+											className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+										>
+											<div className="truncate text-sm font-bold text-white">
+												{creator?.title ?? 'Unknown creator'}
+											</div>
+											<div className="mt-1 text-xs text-white/55">
+												{formatNumber(position.quantity)} keys ·{' '}
+												{position.isPriceLoading
+													? 'Refreshing price'
+													: position.isPriceStale
+														? 'Price stale'
+														: formatDisplayKeyPrice(
+																resolveCreatorKeyPriceStroops(
+																	position
+																)
+															)}
+											</div>
+										</div>
+									);
+								})}
+						</div>
+					</MarketplaceSection>
+
+					<SectionDivider
+						title="Creator profile pattern"
+						spacing="relaxed"
+					/>
 
 					<div className="mb-8 space-y-6">
 						<CreatorBreadcrumb
@@ -790,7 +937,10 @@ function LandingPage() {
 						</SectionErrorBoundary>
 					</div>
 
-					<SectionErrorBoundary sectionName="Creator Profile" minHeight={300}>
+					<SectionErrorBoundary
+						sectionName="Creator Profile"
+						minHeight={300}
+					>
 						{finalFetchError ? (
 							<CreatorProfileLoadError
 								onRetry={handleRetryCreatorFetch}
@@ -820,9 +970,10 @@ function LandingPage() {
 										className="mb-4"
 									/>
 									<CompactSectionSubtitle className="max-w-xl">
-										Use the same subtitle pattern beneath headings, then
-										drop repeated creator facts into one responsive grid
-										that stays tidy on mobile and desktop.
+										Use the same subtitle pattern beneath headings,
+										then drop repeated creator facts into one
+										responsive grid that stays tidy on mobile and
+										desktop.
 									</CompactSectionSubtitle>
 									<div
 										id={`profile-panel-${activeProfileTab}`}
@@ -839,7 +990,9 @@ function LandingPage() {
 											<MiniStatChip
 												label="Audience"
 												value={featuredCreatorKeyHolderCopy.value}
-												explanation={featuredCreatorKeyHolderCopy.explanation}
+												explanation={
+													featuredCreatorKeyHolderCopy.explanation
+												}
 											/>
 											<MiniStatChip
 												label="Access"
@@ -858,8 +1011,8 @@ function LandingPage() {
 												value:
 													FEATURED_CREATOR_FOLLOWER_COUNT != null
 														? formatCompactNumber(
-															FEATURED_CREATOR_FOLLOWER_COUNT
-														)
+																FEATURED_CREATOR_FOLLOWER_COUNT
+															)
 														: 'Not available',
 												helperText:
 													FEATURED_CREATOR_FOLLOWER_COUNT != null
@@ -868,24 +1021,30 @@ function LandingPage() {
 											},
 											{
 												label: 'Your holdings',
-												value: `${formatNumber(featuredHoldings)} keys${formatOwnershipPercent(
-													featuredHoldings,
-													featuredCreator?.creatorShareSupply,
-													{
-														maximumFractionDigits:
-															precisionMode === 'compact' ? 1 : 2,
-													}
-												) !== '—'
-													? ` (${formatOwnershipPercent(
+												value: `${formatNumber(featuredHoldings)} keys${
+													formatOwnershipPercent(
 														featuredHoldings,
 														featuredCreator?.creatorShareSupply,
 														{
 															maximumFractionDigits:
-																precisionMode === 'compact' ? 1 : 2,
+																precisionMode === 'compact'
+																	? 1
+																	: 2,
 														}
-													)})`
-													: ''
-													}`,
+													) !== '—'
+														? ` (${formatOwnershipPercent(
+																featuredHoldings,
+																featuredCreator?.creatorShareSupply,
+																{
+																	maximumFractionDigits:
+																		precisionMode ===
+																		'compact'
+																			? 1
+																			: 2,
+																}
+															)})`
+														: ''
+												}`,
 											},
 										]}
 									/>
@@ -903,11 +1062,11 @@ function LandingPage() {
 										value={
 											precisionMode === 'compact'
 												? `${formatCompactNumber(
-													featuredCreator?.creatorShareSupply
-												)} shares available`
+														featuredCreator?.creatorShareSupply
+													)} shares available`
 												: `${formatNumber(
-													featuredCreator?.creatorShareSupply
-												)} shares available`
+														featuredCreator?.creatorShareSupply
+													)} shares available`
 										}
 									/>
 									{isNetworkMismatch && <NetworkMismatchBanner />}
@@ -915,14 +1074,17 @@ function LandingPage() {
 										<div
 											className={cn(
 												'hidden md:flex items-center gap-3 transition-opacity duration-200',
-												tradeSubmitting && 'pointer-events-none select-none opacity-60'
+												tradeSubmitting &&
+													'pointer-events-none select-none opacity-60'
 											)}
 											aria-busy={tradeSubmitting || undefined}
 										>
 											<Button
 												className="rounded-xl"
 												onClick={() => openTradeDialog('buy')}
-												disabled={isNetworkMismatch || tradeSubmitting}
+												disabled={
+													isNetworkMismatch || tradeSubmitting
+												}
 											>
 												Buy
 											</Button>
@@ -930,7 +1092,9 @@ function LandingPage() {
 												className="rounded-xl"
 												variant="outline"
 												onClick={() => openTradeDialog('sell')}
-												disabled={isNetworkMismatch || tradeSubmitting}
+												disabled={
+													isNetworkMismatch || tradeSubmitting
+												}
 											>
 												Sell
 											</Button>
@@ -959,14 +1123,27 @@ function LandingPage() {
 									className="truncate font-jakarta text-sm font-bold text-white/85"
 									aria-label={`Wallet holdings: ${formatNumber(
 										featuredHoldings
-									)} keys${formatOwnershipPercent(featuredHoldings, featuredCreator?.creatorShareSupply) !== '—'
-										? ` (${formatOwnershipPercent(featuredHoldings, featuredCreator?.creatorShareSupply)})`
-										: ''}`}
+									)} keys${
+										formatOwnershipPercent(
+											featuredHoldings,
+											featuredCreator?.creatorShareSupply
+										) !== '—'
+											? ` (${formatOwnershipPercent(featuredHoldings, featuredCreator?.creatorShareSupply)})`
+											: ''
+									}`}
 								>
 									{formatNumber(featuredHoldings)} keys
-									{formatOwnershipPercent(featuredHoldings, featuredCreator?.creatorShareSupply) !== '—' && (
+									{formatOwnershipPercent(
+										featuredHoldings,
+										featuredCreator?.creatorShareSupply
+									) !== '—' && (
 										<span className="ml-2 text-xs font-normal text-white/60">
-											({formatOwnershipPercent(featuredHoldings, featuredCreator?.creatorShareSupply)})
+											(
+											{formatOwnershipPercent(
+												featuredHoldings,
+												featuredCreator?.creatorShareSupply
+											)}
+											)
 										</span>
 									)}
 								</div>
@@ -976,7 +1153,8 @@ function LandingPage() {
 									<div
 										className={cn(
 											'flex items-center gap-2 transition-opacity duration-200',
-											tradeSubmitting && 'pointer-events-none select-none opacity-60'
+											tradeSubmitting &&
+												'pointer-events-none select-none opacity-60'
 										)}
 										aria-busy={tradeSubmitting || undefined}
 									>
