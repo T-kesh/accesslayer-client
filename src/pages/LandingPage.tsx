@@ -18,7 +18,7 @@ import { ProfileTabPillGroup } from '@/components/common/ProfileTabPill';
 import CreatorBreadcrumb from '@/components/common/CreatorBreadcrumb';
 import CreatorProfileHeader from '@/components/common/CreatorProfileHeader';
 import TransactionRetryNotice from '@/components/common/TransactionRetryNotice';
-import EmptyTransactionTimelineState from '@/components/common/EmptyTransactionTimelineState';
+import TransactionHistory from '@/components/common/TransactionHistory';
 import TradeDialog, { type TradeSide } from '@/components/common/TradeDialog';
 import PendingTxModal from '@/components/common/PendingTxModal';
 import NetworkMismatchBanner from '@/components/common/NetworkMismatchBanner';
@@ -636,7 +636,7 @@ function LandingPage() {
 					spacing="relaxed"
 				/>
 				<MarketplaceSection spacing="relaxed">
-					<EmptyTransactionTimelineState />
+					<TransactionHistory />
 				</MarketplaceSection>
 			</div>
 
