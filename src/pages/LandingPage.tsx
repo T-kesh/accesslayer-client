@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { LayoutGroup, motion } from 'framer-motion';
+import { useSearchParams } from 'react-router';
 import { courseService, type Course } from '@/services/course.service';
 import SkipToContent from '@/components/common/SkipToContent';
 import { cn } from '@/lib/utils';
@@ -254,7 +255,13 @@ function LandingPage() {
 	const { isMismatch: isNetworkMismatch } = useNetworkMismatch();
 	const [isLoading, setIsLoading] = useState(true);
 	const [isFilterLoading, setIsFilterLoading] = useState(false);
-	const [searchQuery, setSearchQuery] = useState('');
+	const [searchParams, setSearchParams] = useSearchParams();
+	const [searchQuery, setSearchQuery] = useState(() => {
+		const q = searchParams.get('q');
+		return q ?? '';
+	});
+	const searchQueryRef = useRef(searchQuery);
+	const sortOptionRef = useRef<SortOption>('featured');
 	const [activeProfileTab, setActiveProfileTab] = useState(() => {
 		if (typeof window === 'undefined') return 'overview';
 		const PROFILE_TABS = ['overview', 'creations', 'collectors', 'activity'];
@@ -268,11 +275,21 @@ function LandingPage() {
 	const [tradeSubmitting, setTradeSubmitting] = useState(false);
 	const prefersReducedMotion = usePrefersReducedMotion();
 	const [sortOption, setSortOption] = useState<SortOption>(() => {
-		if (typeof window === 'undefined') return 'featured';
-		const saved = window.localStorage.getItem(
-			CREATOR_SORT_KEY
-		) as SortOption | null;
-		return saved ?? 'featured';
+		const sort = searchParams.get('sort') as SortOption | null;
+		if (sort && ['featured', 'price-asc', 'price-desc', 'supply-desc'].includes(sort)) {
+			sortOptionRef.current = sort;
+			return sort;
+		}
+		if (typeof window !== 'undefined') {
+			const saved = window.localStorage.getItem(
+				CREATOR_SORT_KEY
+			) as SortOption | null;
+			if (saved) {
+				sortOptionRef.current = saved;
+				return saved;
+			}
+		}
+		return 'featured';
 	});
 	const [fetchRetryAttempt, setFetchRetryAttempt] = useState(0);
 	const [fetchRequestId, setFetchRequestId] = useState(0);
@@ -292,6 +309,15 @@ function LandingPage() {
 	});
 	const pendingScrollRestoreRef = useRef<number | null>(null);
 
+	// Keep refs in sync with state
+	useEffect(() => {
+		searchQueryRef.current = searchQuery;
+	}, [searchQuery]);
+
+	useEffect(() => {
+		sortOptionRef.current = sortOption;
+	}, [sortOption]);
+
 	// Use scroll preservation for profile tabs
 	useScrollPreservation(activeProfileTab, {
 		storageKey: 'accesslayer.profile-tab-scroll',
@@ -310,6 +336,36 @@ function LandingPage() {
 			window.localStorage.setItem(CREATOR_SORT_KEY, sortOption);
 		}
 	}, [sortOption]);
+
+	useEffect(() => {
+		const newParams = new URLSearchParams(searchParams);
+		if (searchQuery.trim()) {
+			newParams.set('q', searchQuery.trim());
+		} else {
+			newParams.delete('q');
+		}
+		if (sortOption !== 'featured') {
+			newParams.set('sort', sortOption);
+		} else {
+			newParams.delete('sort');
+		}
+		setSearchParams(newParams, { replace: true });
+	}, [searchQuery, sortOption, searchParams, setSearchParams]);
+
+	useEffect(() => {
+		const q = searchParams.get('q');
+		if (q !== null && q !== searchQueryRef.current) {
+			setSearchQuery(q);
+		} else if (q === null && searchQueryRef.current !== '') {
+			setSearchQuery('');
+		}
+		const sort = searchParams.get('sort') as SortOption | null;
+		if (sort && ['featured', 'price-asc', 'price-desc', 'supply-desc'].includes(sort) && sort !== sortOptionRef.current) {
+			setSortOption(sort);
+		} else if (sort === null && sortOptionRef.current !== 'featured') {
+			setSortOption('featured');
+		}
+	}, [searchParams]);
 
 	useEffect(() => {
 		if (typeof window === 'undefined') return;
