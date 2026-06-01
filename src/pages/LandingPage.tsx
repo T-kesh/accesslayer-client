@@ -43,6 +43,8 @@ import SectionErrorBoundary from '@/components/common/SectionErrorBoundary';
 import StaleDataWarning from '@/components/common/StaleDataWarning';
 import { useScrollPreservation } from '@/hooks/useScrollPreservation';
 import { useStaleData } from '@/hooks/useStaleData';
+import { useIdleRefreshPrompt } from '@/hooks/useIdleRefreshPrompt';
+import IdleRefreshPrompt from '@/components/common/IdleRefreshPrompt';
 import {
 	CREATOR_CARD_ENTRY_CLASS,
 	creatorCardEntryStyle,
@@ -507,6 +509,20 @@ function LandingPage() {
 			onStale: handleRetryCreatorFetch,
 		}
 	);
+
+	// Idle-refresh prompt: after 5 minutes of inactivity, show a subtle
+	// banner offering to refresh the creator list. Any user interaction
+	// dismisses it automatically without refreshing.
+	const {
+		isPromptVisible: isIdlePromptVisible,
+		dismissPrompt: dismissIdlePrompt,
+		resetTimer: resetIdleTimer,
+	} = useIdleRefreshPrompt({ thresholdMs: 5 * 60 * 1000 });
+
+	const handleIdleRefresh = () => {
+		resetIdleTimer();
+		handleRetryCreatorFetch();
+	};
 
 	const heldKeyPositions = useMemo(
 		() =>
@@ -1248,6 +1264,11 @@ function LandingPage() {
 				onConfirm={handleConfirmTrade}
 			/>
 			<ScrollToTop />
+			<IdleRefreshPrompt
+				visible={isIdlePromptVisible}
+				onRefresh={handleIdleRefresh}
+				onDismiss={dismissIdlePrompt}
+			/>
 		</div>
 	);
 }
